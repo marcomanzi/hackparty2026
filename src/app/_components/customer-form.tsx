@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { api } from "@/trpc/react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 export function CustomerForm() {
   const [content, setContent] = useState("");
@@ -21,35 +23,31 @@ export function CustomerForm() {
   };
 
   return (
-    <div className="w-full max-w-xl rounded-2xl bg-white/5 p-8 backdrop-blur-lg border border-white/10 shadow-2xl">
-      <h2 className="text-3xl font-bold text-white mb-6">Send us a message</h2>
-      
+    <div className="w-full max-w-xl space-y-8">
       {isSuccess && (
-        <div className="mb-6 p-4 rounded-lg bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 text-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          Message sent successfully!
+        <div className="p-4 bg-white text-black text-center font-bold tracking-widest uppercase animate-in fade-in slide-in-from-top-4 duration-500">
+          Message delivered
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            rows={5}
-            placeholder="How can we help you?"
-            className="w-full rounded-xl bg-white/10 border border-white/20 px-4 py-4 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[hsl(280,100%,70%)] transition-all hover:bg-white/15 resize-none text-lg"
-          />
-        </div>
+        <Textarea
+          id="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+          rows={6}
+          placeholder="What is the objective?"
+          className="rounded-none bg-transparent border-white/10 text-white placeholder:text-white/20 focus:border-white focus:ring-0 transition-all duration-300 resize-none text-xl p-6"
+        />
 
-        <button
+        <Button
           type="submit"
           disabled={createTicket.isPending}
-          className="w-full rounded-xl bg-gradient-to-r from-[hsl(280,100%,70%)] to-[hsl(250,100%,70%)] px-6 py-4 font-bold text-white shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] hover:shadow-purple-500/40 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+          className="w-full rounded-none bg-white text-black hover:bg-white/90 font-black uppercase tracking-[0.2em] py-8 text-lg transition-all duration-300 disabled:opacity-50"
         >
-          {createTicket.isPending ? "Sending..." : "Send Message"}
-        </button>
+          {createTicket.isPending ? "Transmitting..." : "Send Message"}
+        </Button>
       </form>
     </div>
   );
