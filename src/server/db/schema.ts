@@ -108,6 +108,8 @@ export const tickets = createTable("ticket", (d) => ({
   id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   content: d.text({ length: 1000 }).notNull(),
   categories: d.text({ mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+  status: d.text({ length: 20 }).notNull().default("pending"),
+  priorityLevel: d.text({ length: 20 }).notNull().default("medium"),
   createdAt: d
     .integer({ mode: "timestamp" })
     .default(sql`(unixepoch())`)
