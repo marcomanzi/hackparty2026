@@ -76,6 +76,16 @@ export const ticketRouter = createTRPCRouter({
     });
   }),
 
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const ticket = await ctx.db.query.tickets.findFirst({
+        where: (tickets, { eq }) => eq(tickets.id, input.id),
+      });
+      if (!ticket) throw new Error("Ticket not found");
+      return ticket;
+    }),
+
   getStats: protectedProcedure.query(async ({ ctx }) => {
     const allTickets = await ctx.db.query.tickets.findMany();
     
@@ -103,5 +113,30 @@ export const ticketRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.delete(tickets).where(sql`${tickets.id} = ${input.id}`);
+    }),
+
+  translate: protectedProcedure
+    .input(z.object({
+      message: z.string(),
+      outputLanguage: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const response = await fetch('https://d7dc-93-43-95-133.ngrok-free.app/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Translation API failed: ${response.statusText}`);
+        }
+
+        const data = await response.json() as { message: string };
+        return { translatedText: data.message };
+      } catch (error) {
+        console.error("Translation error:", error);
+        throw new Error("Failed to translate message");
+      }
     }),
 });

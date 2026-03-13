@@ -39,6 +39,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 interface Ticket {
   id: number;
@@ -305,10 +306,12 @@ export function TicketDashboard({
                       )}
                       
                       <div className="flex gap-2">
-                        <Button variant="secondary" size="sm" className="flex-1 h-9 rounded-lg text-[9px] font-black uppercase tracking-widest gap-1.5 bg-muted/40 hover:bg-muted transition-all">
-                          <ExternalLink size={12} className="opacity-40" />
-                          Details
-                        </Button>
+                        <Link href={`/back-office/tickets/${ticket.id}`} className="flex-1">
+                          <Button variant="secondary" size="sm" className="w-full h-9 rounded-lg text-[9px] font-black uppercase tracking-widest gap-1.5 bg-muted/40 hover:bg-muted transition-all">
+                            <ExternalLink size={12} className="opacity-40" />
+                            Details
+                          </Button>
+                        </Link>
                         <DropdownMenu>
                           <DropdownMenuTrigger render={
                             <Button variant="ghost" size="icon" className="size-9 rounded-lg bg-muted/20 border border-transparent hover:border-border">
