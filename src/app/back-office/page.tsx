@@ -56,11 +56,16 @@ export default async function BackOfficePage() {
                   <p className="text-lg leading-relaxed">
                     {ticket.content}
                   </p>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase">
-                      {ticket.category}
+                  <div className="flex flex-wrap gap-2 pt-4">
+                  {ticket.categories.map((cat, index) => (
+                    <span 
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase"
+                    >
+                      {cat}
                     </span>
-                  </div>
+                  ))}
+                </div>
                 </CardContent>
               </Card>
             ))

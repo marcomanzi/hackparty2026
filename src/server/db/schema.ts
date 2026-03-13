@@ -107,7 +107,7 @@ export const verificationTokens = createTable(
 export const tickets = createTable("ticket", (d) => ({
   id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
   content: d.text({ length: 1000 }).notNull(),
-  category: d.text({ length: 50 }).notNull().default("General"),
+  categories: d.text({ mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   createdAt: d
     .integer({ mode: "timestamp" })
     .default(sql`(unixepoch())`)
