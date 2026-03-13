@@ -48,6 +48,7 @@ interface Ticket {
   categories: string[];
   status: string;
   priorityLevel: string;
+  senderId: string | null;
   createdAt: Date;
   updatedAt: Date | null;
 }

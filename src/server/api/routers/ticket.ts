@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { tickets } from "@/server/db/schema";
+import { tickets, messages } from "@/server/db/schema";
 
 export const ticketRouter = createTRPCRouter({
   create: publicProcedure
@@ -39,7 +39,6 @@ export const ticketRouter = createTRPCRouter({
           if (data.priorityLevel) {
             priority = data.priorityLevel.toLowerCase();
           } else if (classifiedCategories.length > 0) {
-            // Fallback to enhanced priority logic if API doesn't provide it
             const criticalKeywords = ["error", "500", "critical", "payment", "suspension", "api-issue", "failed", "crash"];
             const urgentKeywords = ["urgent", "broken", "bug", "security", "exploit"];
             
@@ -62,12 +61,24 @@ export const ticketRouter = createTRPCRouter({
         console.error("Classification API error:", error);
       }
 
-      await ctx.db.insert(tickets).values({
+      const [ticket] = await ctx.db.insert(tickets).values({
         content: input.content,
         categories: classifiedCategories.length > 0 ? classifiedCategories : ["General"],
         priorityLevel: priority,
         status: "pending",
-      });
+        senderId: ctx.session?.user.id,
+      }).returning();
+
+      if (ticket) {
+        await ctx.db.insert(messages).values({
+          ticketId: ticket.id,
+          content: input.content,
+          senderType: "customer",
+          senderId: ctx.session?.user.id,
+        });
+      }
+
+      return ticket;
     }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -138,5 +149,53 @@ export const ticketRouter = createTRPCRouter({
         console.error("Translation error:", error);
         throw new Error("Failed to translate message");
       }
+    }),
+
+  getMessages: publicProcedure
+    .input(z.object({ ticketId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const dbMessages = await ctx.db.query.messages.findMany({
+        where: (messages, { eq }) => eq(messages.ticketId, input.ticketId),
+        orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+      });
+
+      if (dbMessages.length === 0) {
+        // Fallback for legacy tickets
+        const ticket = await ctx.db.query.tickets.findFirst({
+          where: (tickets, { eq }) => eq(tickets.id, input.ticketId),
+        });
+        if (ticket) {
+          return [{
+            id: 0,
+            ticketId: ticket.id,
+            content: ticket.content,
+            senderType: "customer",
+            senderId: ticket.senderId,
+            createdAt: ticket.createdAt,
+          }];
+        }
+      }
+
+      return dbMessages;
+    }),
+
+  addMessage: publicProcedure
+    .input(z.object({
+      ticketId: z.number(),
+      content: z.string().min(1),
+      senderType: z.enum(["customer", "staff"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [message] = await ctx.db.insert(messages).values({
+        ticketId: input.ticketId,
+        content: input.content,
+        senderType: input.senderType,
+        senderId: ctx.session?.user.id,
+      }).returning();
+
+      // Update ticket updatedAt
+      await ctx.db.update(tickets).set({ updatedAt: new Date() }).where(sql`${tickets.id} = ${input.ticketId}`);
+
+      return message;
     }),
 });

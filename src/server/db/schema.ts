@@ -110,9 +110,32 @@ export const tickets = createTable("ticket", (d) => ({
   categories: d.text({ mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
   status: d.text({ length: 20 }).notNull().default("pending"),
   priorityLevel: d.text({ length: 20 }).notNull().default("medium"),
+  senderId: d.text({ length: 255 }),
   createdAt: d
     .integer({ mode: "timestamp" })
     .default(sql`(unixepoch())`)
     .notNull(),
   updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+}));
+
+export const messages = createTable("message", (d) => ({
+  id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  ticketId: d.integer({ mode: "number" }).notNull().references(() => tickets.id, { onDelete: "cascade" }),
+  senderId: d.text({ length: 255 }),
+  senderType: d.text({ length: 20 }).notNull(), // 'customer' or 'staff'
+  content: d.text().notNull(),
+  createdAt: d
+    .integer({ mode: "timestamp" })
+    .default(sql`(unixepoch())`)
+    .notNull(),
+}));
+
+export const ticketsRelations = relations(tickets, ({ many, one }) => ({
+  messages: many(messages),
+  sender: one(users, { fields: [tickets.senderId], references: [users.id] }),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  ticket: one(tickets, { fields: [messages.ticketId], references: [tickets.id] }),
+  sender: one(users, { fields: [messages.senderId], references: [users.id] }),
 }));
