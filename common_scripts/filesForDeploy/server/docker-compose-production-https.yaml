@@ -1,0 +1,62 @@
+services:
+  # Caddy reverse proxy with automatic HTTPS
+  caddy:
+    image: caddy:2.7-alpine
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  # Serverpod server (not exposed directly, only through Caddy)
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8080"  # API port (internal only)
+      - "8081"  # Insights port (internal only)
+      - "8082"  # Web server port (internal only)
+    environment:
+      runmode: production
+      serverid: default
+      logging: normal
+      role: monolith
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # PostgreSQL database
+  postgres:
+    image: pgvector/pgvector:pg16
+    expose:
+      - "5432"  # Internal only, not exposed to host
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: hack_party_2026
+      POSTGRES_PASSWORD: "C-whI1HZFNnEcMXDCdaGbjFmYiI2FY68fasr3eqww"
+    volumes:
+      - hack_party_2026_prod_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Redis cache
+  redis:
+    image: redis:6.2.6
+    expose:
+      - "6379"  # Internal only, not exposed to host
+    command: redis-server --requirepass "GCSOvVn5widFzk-4XLbyqo-pCm-12331safd"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    restart: unless-stopped
+
+volumes:
+  hack_party_2026_prod_data:
+  caddy_data:
+  caddy_config:
+

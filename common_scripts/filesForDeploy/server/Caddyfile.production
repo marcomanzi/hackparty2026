@@ -1,0 +1,36 @@
+# Production Caddyfile with HTTPS
+# Replace these domains with your actual domain names
+
+# API Server
+api.yourdomain.com {
+    reverse_proxy server:8080
+}
+
+# Insights Server
+insights.yourdomain.com {
+    reverse_proxy server:8081
+}
+
+# Web/App Server
+app.yourdomain.com {
+    reverse_proxy server:8082
+}
+
+# Alternatively, if you have a single domain:
+# yourdomain.com {
+#     # API endpoint
+#     handle /api/* {
+#         reverse_proxy server:8080
+#     }
+#     
+#     # Insights endpoint
+#     handle /insights/* {
+#         reverse_proxy server:8081
+#     }
+#     
+#     # Web/App (default)
+#     handle {
+#         reverse_proxy server:8082
+#     }
+# }
+
