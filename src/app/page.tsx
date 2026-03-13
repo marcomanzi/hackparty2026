@@ -2,7 +2,7 @@ import { CustomerForm } from "@/app/_components/customer-form";
 import { auth } from "@/server/auth";
 import { HydrateClient } from "@/trpc/server";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
 export default async function Home() {
@@ -10,28 +10,36 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white selection:bg-white selection:text-black">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
           <div className="text-center space-y-4">
-            <h1 className="text-7xl font-light tracking-tighter sm:text-[8rem] uppercase">
-              Hack<span className="font-black">Party</span>
+            <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
+              Hack<span className="text-primary">Party</span>
             </h1>
-            <p className="text-xl text-white/40 tracking-widest uppercase">High performance software scaling.</p>
+            <p className="text-xl text-muted-foreground">High performance software scaling.</p>
           </div>
 
           <CustomerForm />
 
           <div className="flex flex-col items-center gap-6 pt-8">
             {session && (
-              <p className="text-center text-sm tracking-wide text-white/50 uppercase">
-                Logged in as <span className="text-white font-bold">{session.user?.name}</span>
-              </p>
+              <div className="flex flex-col items-center gap-4">
+                <p className="text-center text-sm text-muted-foreground font-medium">
+                  Logged in as <span className="text-foreground font-bold">{session.user?.name}</span>
+                </p>
+                <Link 
+                  href="/back-office"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-all duration-300 underline underline-offset-4"
+                >
+                  Enter Back Office
+                </Link>
+              </div>
             )}
             <Link 
               href={session ? "/api/auth/signout" : "/api/auth/signin"}
               className={cn(
-                buttonVariants({ variant: "outline" }),
-                "rounded-none border-white/20 hover:bg-white hover:text-black px-12 py-6 text-sm uppercase tracking-widest transition-all duration-300 h-auto"
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "px-8 transition-all duration-300"
               )}
             >
               {session ? "Sign out" : "Sign in"}

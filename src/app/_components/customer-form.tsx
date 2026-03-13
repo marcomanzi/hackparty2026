@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export function CustomerForm() {
   const [content, setContent] = useState("");
@@ -23,32 +24,38 @@ export function CustomerForm() {
   };
 
   return (
-    <div className="w-full max-w-xl space-y-8">
-      {isSuccess && (
-        <div className="p-4 bg-white text-black text-center font-bold tracking-widest uppercase animate-in fade-in slide-in-from-top-4 duration-500">
-          Message delivered
-        </div>
-      )}
+    <Card className="w-full max-w-xl shadow-lg border-border">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold">Send us a message</CardTitle>
+        <CardDescription>We&apos;ll get back to you as soon as possible.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {isSuccess && (
+          <div className="p-4 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-center font-medium animate-in fade-in slide-in-from-top-4 duration-500">
+            Message sent successfully!
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Textarea
-          id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          required
-          rows={6}
-          placeholder="What is the objective?"
-          className="rounded-none bg-transparent border-white/10 text-white placeholder:text-white/20 focus:border-white focus:ring-0 transition-all duration-300 resize-none text-xl p-6"
-        />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Textarea
+            id="content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            required
+            rows={5}
+            placeholder="How can we help you today?"
+            className="bg-muted/50 border-input focus:ring-primary transition-all duration-300 resize-none text-lg p-4"
+          />
 
-        <Button
-          type="submit"
-          disabled={createTicket.isPending}
-          className="w-full rounded-none bg-white text-black hover:bg-white/90 font-black uppercase tracking-[0.2em] py-8 text-lg transition-all duration-300 disabled:opacity-50"
-        >
-          {createTicket.isPending ? "Transmitting..." : "Send Message"}
-        </Button>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            disabled={createTicket.isPending}
+            className="w-full font-bold py-6 text-lg transition-all duration-300"
+          >
+            {createTicket.isPending ? "Sending..." : "Send Message"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
