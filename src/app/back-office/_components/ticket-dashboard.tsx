@@ -33,6 +33,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -192,13 +193,15 @@ export function TicketDashboard({
             </Button>
           } />
           <DropdownMenuContent align="end" className="rounded-xl w-48 p-2 glass border-primary/10">
-            <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Sorting</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
-              <DropdownMenuRadioItem value="newest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Newest</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="oldest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Oldest</DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="priority" className="rounded-lg px-2 py-2 text-[11px] font-bold">Highest Priority</DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Sorting</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
+                <DropdownMenuRadioItem value="newest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Newest</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="oldest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Oldest</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="priority" className="rounded-lg px-2 py-2 text-[11px] font-bold">Highest Priority</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

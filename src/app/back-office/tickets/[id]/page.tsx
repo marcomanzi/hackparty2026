@@ -23,6 +23,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
@@ -32,13 +33,18 @@ import Link from "next/link";
 
 const languages = [
   { name: "German", code: "de" },
+  { name: "Italian", code: "it" },
   { name: "Spanish", code: "es" },
   { name: "French", code: "fr" },
-  { name: "Italian", code: "it" },
+  { name: "English", code: "en" },
   { name: "Portuguese", code: "pt" },
   { name: "Dutch", code: "nl" },
   { name: "Chinese", code: "zh" },
   { name: "Japanese", code: "ja" },
+  { name: "Hindi", code: "hi" },
+  { name: "Arabic", code: "ar" },
+  { name: "Russian", code: "ru" },
+  { name: "Korean", code: "ko" },
 ];
 
 export default function TicketDetailPage() {
@@ -159,17 +165,19 @@ export default function TicketDetailPage() {
                     </Button>
                   } />
                   <DropdownMenuContent align="end" className="rounded-xl w-48 p-2 glass border-primary/10">
-                    <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Select Language</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {languages.map((lang) => (
-                      <DropdownMenuItem 
-                        key={lang.code}
-                        className="rounded-lg px-2 py-2 text-[11px] font-bold"
-                        onClick={() => setSelectedLanguage(lang)}
-                      >
-                        {lang.name}
-                      </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Select Language</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {languages.map((lang) => (
+                        <DropdownMenuItem 
+                          key={lang.code}
+                          className="rounded-lg px-2 py-2 text-[11px] font-bold"
+                          onClick={() => setSelectedLanguage(lang)}
+                        >
+                          {lang.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
