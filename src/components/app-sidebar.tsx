@@ -35,13 +35,13 @@ import Link from "next/link"
 
 const data = {
   user: {
-    name: "Admin User",
-    email: "admin@hackparty.com",
+    name: "Senior Console Admin",
+    email: "admin@acme.com",
     avatar: "https://github.com/shadcn.png",
   },
   navMain: [
     {
-      title: "Dashboard",
+      title: "Control Center",
       url: "/back-office",
       icon: LayoutDashboard,
       isActive: true,
@@ -49,7 +49,7 @@ const data = {
   ],
   admin: [
     {
-      name: "Settings",
+      name: "Node Settings",
       url: "#",
       icon: Settings,
     },
@@ -63,12 +63,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/back-office" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Ticket className="size-4" />
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground italic font-black text-xs">
+                A.
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">SupportHub</span>
-                <span className="truncate text-xs">Enterprise Admin</span>
+              <div className="grid flex-1 text-left text-sm leading-tight uppercase font-black tracking-tight">
+                <span className="truncate italic">ACME<span className="text-primary not-italic">.</span></span>
+                <span className="truncate text-[9px] font-black opacity-40 -mt-0.5 tracking-[0.2em]">Senior Console</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

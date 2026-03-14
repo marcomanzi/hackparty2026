@@ -33,7 +33,7 @@ export default function BackOfficeLayout({
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
                     <BreadcrumbLink href="/back-office">
-                      Administration
+                      ACME Administration
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />

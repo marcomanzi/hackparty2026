@@ -24,11 +24,15 @@ import {
   MoreVertical,
   Trash2,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Bot,
+  Zap,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -186,25 +190,28 @@ export function TicketDashboard({
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger render={
-            <Button variant="outline" size="sm" className="h-10 rounded-xl gap-2 px-4 border-muted hover:bg-muted/50">
-              <ArrowUpDown size={12} className="text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider font-bold">Sort: {sortBy}</span>
-            </Button>
-          } />
-          <DropdownMenuContent align="end" className="rounded-xl w-48 p-2 glass border-primary/10">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Sorting</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
-                <DropdownMenuRadioItem value="newest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Newest</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="oldest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Oldest</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="priority" className="rounded-lg px-2 py-2 text-[11px] font-bold">Highest Priority</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <AiToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger render={
+              <Button variant="outline" size="sm" className="h-10 rounded-xl gap-2 px-4 border-muted hover:bg-muted/50">
+                <ArrowUpDown size={12} className="text-muted-foreground" />
+                <span className="text-[10px] uppercase tracking-wider font-bold">Sort: {sortBy}</span>
+              </Button>
+            } />
+            <DropdownMenuContent align="end" className="rounded-xl w-48 p-2 glass border-primary/10 shadow-xl">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Sorting</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
+                  <DropdownMenuRadioItem value="newest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Newest</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="oldest" className="rounded-lg px-2 py-2 text-[11px] font-bold">Oldest</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="priority" className="rounded-lg px-2 py-2 text-[11px] font-bold">Highest Priority</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Ticket List */}
@@ -377,5 +384,53 @@ function StatCard({
         <p className="text-[9px] text-muted-foreground/30 mt-2 font-bold uppercase tracking-tight opacity-0 group-hover:opacity-100 transition-opacity duration-300">{description}</p>
       </CardContent>
     </Card>
+  );
+}
+
+function AiToggle() {
+  const { data: settings, isLoading } = api.ticket.getSettings.useQuery();
+  const utils = api.useUtils();
+  const updateSettings = api.ticket.updateSettings.useMutation({
+    onSuccess: () => {
+      void utils.ticket.invalidate();
+    },
+  });
+
+  if (isLoading) return <Loader2 className="animate-spin text-slate-200" size={16} />;
+
+  const isEnabled = settings?.autoResponseEnabled;
+
+  return (
+    <div className={cn(
+      "flex items-center gap-3 px-4 py-2 rounded-xl border transition-all duration-500",
+      isEnabled ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5" : "bg-slate-50 border-slate-100"
+    )}>
+      <div className="flex items-center gap-2">
+        <div className={cn(
+          "size-2 rounded-full",
+          isEnabled ? "bg-primary animate-pulse" : "bg-slate-300"
+        )} />
+        <span className={cn(
+          "text-[9px] font-black uppercase tracking-widest",
+          isEnabled ? "text-primary/70" : "text-slate-400"
+        )}>
+          {isEnabled ? "AI Active" : "AI Inactive"}
+        </span>
+      </div>
+      <div className="h-4 w-px bg-slate-200" />
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className={cn(
+          "h-7 rounded-lg px-2 text-[9px] font-black uppercase tracking-widest hover:bg-transparent",
+          isEnabled ? "text-primary" : "text-slate-400"
+        )}
+        onClick={() => updateSettings.mutate({ autoResponseEnabled: !isEnabled })}
+        disabled={updateSettings.isPending}
+      >
+        {isEnabled ? <Zap size={12} className="fill-current" /> : <Bot size={12} />}
+        <span className="ml-2">{isEnabled ? "Disable" : "Enable"}</span>
+      </Button>
+    </div>
   );
 }

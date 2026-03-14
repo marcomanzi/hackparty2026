@@ -2,12 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ChevronLeft,
@@ -27,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 const languages = [
@@ -94,103 +88,100 @@ export default function TicketDetailPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700 p-4 lg:p-0">
-      <div className="flex items-center justify-between">
-        <Link href="/back-office">
-          <Button variant="ghost" size="sm" className="gap-2 rounded-xl h-10 px-4 hover:bg-muted font-bold text-[10px] uppercase tracking-widest text-muted-foreground">
-            <ChevronLeft size={14} />
-            Back to Dashboard
-          </Button>
-        </Link>
+    <div className="flex flex-col h-[calc(100vh-8rem)] bg-slate-50/50 -m-8 animate-in fade-in duration-700">
+      {/* Sticky Header */}
+      <header className="shrink-0 bg-white border-b border-slate-100 px-8 py-6 flex items-center justify-between z-10 shadow-sm">
+        <div className="flex items-center gap-6">
+          <Link href="/back-office">
+            <Button variant="ghost" size="icon" className="size-10 rounded-full hover:bg-slate-50 text-slate-400">
+              <ChevronLeft size={20} />
+            </Button>
+          </Link>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <span className="text-xl font-bold tracking-tight text-slate-900">Signal #{ticket.id}</span>
+              <Badge variant="outline" className={cn("rounded-full font-black text-[9px] tracking-widest h-6 px-3 border-none", getPriorityColor(ticket.priorityLevel))}>
+                {ticket.priorityLevel.toUpperCase()}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              {ticket.categories.map((cat, idx) => (
+                <span key={idx} className="text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                  {cat}{idx < ticket.categories.length - 1 ? " · " : ""}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
 
-        <div className="flex gap-2">
-           <Button 
+        <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={
+              <Button variant="outline" size="sm" className="h-10 rounded-xl gap-2 px-4 text-[10px] font-black uppercase tracking-widest border-slate-100 hover:bg-slate-50">
+                <Languages size={14} className="text-primary" />
+                {selectedLanguage?.name}
+              </Button>
+            } />
+            <DropdownMenuContent align="end" className="rounded-xl w-48 p-2 glass border-slate-100 shadow-xl">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">AI Translation</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {languages.map((lang) => (
+                  <DropdownMenuItem 
+                    key={lang.code}
+                    className="rounded-lg px-2 py-2 text-[11px] font-bold"
+                    onClick={() => setSelectedLanguage(lang)}
+                  >
+                    {lang.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button 
             variant="ghost" 
-            size="sm" 
-            className="rounded-xl h-10 px-4 text-destructive hover:bg-destructive/10 font-bold text-[10px] uppercase tracking-widest"
+            size="icon" 
+            className="size-10 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
             onClick={() => {
-              if (confirm("Are you sure?")) {
+              if (confirm("Purge this signal and all transmissions?")) {
                 deleteTicket.mutate({ id: ticket.id });
               }
             }}
           >
-            <Trash2 size={14} className="mr-2" />
-            Purge Signal
+            <Trash2 size={18} />
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="grid gap-8">
-        {/* Main Content Card */}
-        <Card className="rounded-[2.5rem] border-border/40 overflow-hidden shadow-2xl shadow-primary/5">
-          <CardHeader className="p-8 lg:p-12 border-b bg-muted/20">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-2 bg-background px-3 py-1.5 rounded-xl border shadow-sm">
-                <span className="text-[10px] font-black text-muted-foreground/50 tracking-widest">SIGNAL</span>
-                <span className="text-xs font-mono font-black text-primary">#{ticket.id}</span>
-              </div>
-              <Badge variant="outline" className={cn("rounded-xl font-black text-[10px] tracking-widest h-8 px-4 border-none py-0", getPriorityColor(ticket.priorityLevel))}>
-                {ticket.priorityLevel.toUpperCase()}
-              </Badge>
-              <div className="text-[10px] font-black text-muted-foreground/40 ml-auto tracking-widest uppercase">
-                {new Date(ticket.createdAt).toLocaleString()}
-              </div>
-            </div>
-            <CardTitle className="text-3xl lg:text-4xl font-bold leading-tight tracking-tighter">
-              {ticket.content}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 lg:p-12 space-y-10">
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Classification</h3>
-              <div className="flex flex-wrap gap-2">
-                {ticket.categories.map((cat, idx) => (
-                  <span key={idx} className="text-[10px] font-black uppercase tracking-widest bg-primary/5 text-primary px-4 py-2 rounded-xl border border-primary/10">
-                    {cat}
-                  </span>
-                ))}
-              </div>
-            </div>
+      {/* Conversation Area */}
+      <div className="flex-1 min-h-0 relative">
+        <div className="absolute inset-0 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Initial Subject Message */}
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm mb-12 animate-in slide-in-from-top-4 duration-500">
+               <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300 mb-4">Initial Transmission</div>
+               <h2 className="text-3xl font-bold tracking-tight text-slate-900 leading-[1.1]">
+                 {ticket.content}
+               </h2>
+               
+               {translationResult && (
+                  <div className="mt-8 pt-8 border-t border-slate-50 animate-in fade-in duration-500">
+                    <div className="flex items-center gap-2 mb-3">
+                       <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+                       <span className="text-[9px] font-black uppercase tracking-widest text-primary">{selectedLanguage?.name} Analysis</span>
+                    </div>
+                    <p className="text-lg font-medium italic text-slate-600 leading-relaxed">
+                      &quot;{translationResult}&quot;
+                    </p>
+                  </div>
+               )}
 
-            <div className="space-y-8 pt-10 border-t">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Transmission History</h3>
-              
-              <div className="space-y-6">
-                <ChatHistory ticketId={ticket.id} />
-              </div>
-              
-              <div className="space-y-6 pt-10 border-t border-dashed">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">AI Translation</h3>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={
-                      <Button variant="outline" size="sm" className="h-10 rounded-xl gap-2 px-4 font-bold text-[10px] uppercase tracking-widest border-muted">
-                        <Languages size={14} className="text-primary" />
-                        {selectedLanguage?.name}
-                      </Button>
-                    } />
-                    <DropdownMenuContent align="end" className="rounded-xl w-48 p-2 glass border-primary/10">
-                      <DropdownMenuGroup>
-                        <DropdownMenuLabel className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Select Language</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {languages.map((lang) => (
-                          <DropdownMenuItem 
-                            key={lang.code}
-                            className="rounded-lg px-2 py-2 text-[11px] font-bold"
-                            onClick={() => setSelectedLanguage(lang)}
-                          >
-                            {lang.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className="space-y-4">
+               <div className="mt-8 flex justify-end">
                   <Button 
-                    className="w-full h-12 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20"
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-primary"
                     onClick={() => {
                       if (selectedLanguage) {
                         translate.mutate({ message: ticket.content, outputLanguage: selectedLanguage.code });
@@ -198,29 +189,15 @@ export default function TicketDetailPage() {
                     }}
                     disabled={translate.isPending}
                   >
-                    {translate.isPending ? (
-                      <Loader2 className="animate-spin" size={16} />
-                    ) : (
-                      "Execute Translation Analysis"
-                    )}
+                    {translate.isPending ? <Loader2 className="animate-spin mr-2" size={10} /> : <Languages size={12} className="mr-2" />}
+                    Translate Signal
                   </Button>
-
-                  {translationResult && (
-                    <div className="p-8 rounded-3xl bg-muted/30 border border-primary/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500/70">{selectedLanguage?.name} Response</span>
-                      </div>
-                      <p className="text-xl font-medium leading-relaxed italic text-foreground/90">
-                        &quot;{translationResult}&quot;
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            <ChatHistory ticketId={ticket.id} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -228,10 +205,17 @@ export default function TicketDetailPage() {
 
 function ChatHistory({ ticketId }: { ticketId: number }) {
   const [reply, setReply] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { data: messages, isLoading } = api.ticket.getMessages.useQuery(
     { ticketId },
     { refetchInterval: 5000 }
   );
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const addMessage = api.ticket.addMessage.useMutation({
     onSuccess: () => {
@@ -249,47 +233,59 @@ function ChatHistory({ ticketId }: { ticketId: number }) {
     });
   };
 
-  if (isLoading && !messages) return <Loader2 className="animate-spin text-primary mx-auto" />;
+  if (isLoading && !messages) return (
+    <div className="flex justify-center py-20">
+      <Loader2 className="animate-spin text-slate-200" size={40} />
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
+    <div className="space-y-12">
+      <div className="space-y-6">
         {messages?.map((msg) => (
           <div key={msg.id} className={cn(
-            "flex flex-col gap-1",
+            "flex flex-col group animate-in slide-in-from-bottom-2 duration-500",
             msg.senderType === "staff" ? "items-end" : "items-start"
           )}>
             <div className={cn(
-              "px-4 py-3 rounded-2xl text-sm max-w-[80%]",
+              "px-6 py-4 rounded-[1.5rem] text-sm lg:text-base font-medium max-w-[80%] shadow-sm transition-all duration-300",
               msg.senderType === "staff" 
-                ? "bg-primary text-primary-foreground rounded-tr-none" 
-                : "bg-muted text-foreground rounded-tl-none border"
+                ? "bg-slate-900 text-white rounded-tr-none shadow-black/10" 
+                : "bg-white text-slate-900 rounded-tl-none border border-slate-100 shadow-slate-100/50"
             )}>
               {msg.content}
             </div>
-            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/30 px-1">
-              {msg.senderType === "staff" ? "Agency Reply" : "Incoming Signal"} · {new Date(msg.createdAt).toLocaleTimeString()}
-            </span>
+            <div className="flex items-center gap-3 mt-2 px-1">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
+                {msg.senderType === "staff" 
+                  ? (msg.senderId === "system-ai" ? "ACME AI Response" : "Agency Protocol") 
+                  : "Authorized Signal"}
+              </span>
+              <span className="text-[8px] font-bold text-slate-200 uppercase">
+                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
           </div>
         ))}
       </div>
 
-      <form onSubmit={handleSend} className="pt-6 relative">
+      <div className="sticky bottom-0 pt-8 pb-12 bg-gradient-to-t from-slate-50/50 via-slate-50/50 to-transparent">
+        <form onSubmit={handleSend} className="max-w-4xl mx-auto relative group">
           <Input 
             value={reply}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReply(e.target.value)}
-            placeholder="Broadcast response..."
-            className="h-12 bg-muted/20 border-dashed rounded-xl pr-24 text-xs font-bold"
+            placeholder="Broadcast encrypted response..."
+            className="h-16 bg-white border-slate-100 rounded-2xl pr-32 text-sm font-medium shadow-xl shadow-black/[0.02] focus-visible:ring-primary/20 transition-all border-slate-200"
           />
           <Button 
             type="submit" 
-            size="sm"
             disabled={addMessage.isPending || !reply.trim()}
-            className="absolute right-1.5 top-[calc(1.5rem+6px)] h-9 rounded-lg px-4 text-[9px] font-black uppercase tracking-widest"
+            className="absolute right-2 top-2 h-12 rounded-xl px-6 text-[10px] font-black uppercase tracking-[0.2em] bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-[0.98] transition-all"
           >
-            {addMessage.isPending ? "Syncing..." : "Transmit"}
+            {addMessage.isPending ? <Loader2 className="animate-spin" size={14} /> : "Transmit"}
           </Button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

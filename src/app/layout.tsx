@@ -6,8 +6,8 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
-  title: "SupportHub Dashboard",
-  description: "Enterprise Administrative Interface",
+  title: "ACME | Enterprise Intelligence Dashboard",
+  description: "Secure Administrative Signal Interface for ACME Corporation",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

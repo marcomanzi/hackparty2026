@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Audio Transcriber</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 640px;
+            margin: 60px auto;
+            padding: 0 1rem;
+        }
+
+        button {
+            padding: .6rem 1.4rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 6px;
+            border: none;
+        }
+
+        #recordBtn {
+            background: #e53935;
+            color: #fff;
+        }
+
+        #recordBtn.recording {
+            background: #555;
+        }
+
+        #transcribeBtn {
+            background: #1976d2;
+            color: #fff;
+            margin-left: .5rem;
+        }
+
+        #transcribeBtn:disabled {
+            opacity: .4;
+            cursor: default;
+        }
+
+        #status {
+            margin-top: 1rem;
+            color: #555;
+            font-size: .9rem;
+        }
+
+        #result {
+            margin-top: 1.5rem;
+            white-space: pre-wrap;
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 8px;
+            min-height: 80px;
+        }
+
+        audio {
+            display: block;
+            margin-top: 1rem;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>🎙️ Audio Transcriber</h2>
+
+    <button id="recordBtn">⏺ Start Recording</button>
+    <button id="transcribeBtn" disabled>📤 Transcribe</button>
+
+    <audio id="preview" controls hidden></audio>
+    <p id="status">Ready.</p>
+    <div id="result"></div>
+
+    <script>
+        const API_URL = "https://d7dc-93-43-95-133.ngrok-free.app/transcribe"; // ← change if hosted
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let audioBlob = null;
+
+        const recordBtn = document.getElementById("recordBtn");
+        const transcribeBtn = document.getElementById("transcribeBtn");
+        const preview = document.getElementById("preview");
+        const statusEl = document.getElementById("status");
+        const resultEl = document.getElementById("result");
+
+        // ─── Recording ──────────────────────────────────────────────────────────
+        recordBtn.addEventListener("click", async () => {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream, { mimeType: preferredMimeType() });
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                    preview.src = URL.createObjectURL(audioBlob);
+                    preview.hidden = false;
+                    transcribeBtn.disabled = false;
+                    recordBtn.textContent = "⏺ Start Recording";
+                    recordBtn.classList.remove("recording");
+                    setStatus("Recording saved. Click Transcribe to send.");
+                    stream.getTracks().forEach(t => t.stop());
+                };
+
+                mediaRecorder.start();
+                recordBtn.textContent = "⏹ Stop Recording";
+                recordBtn.classList.add("recording");
+                setStatus("Recording…");
+            } catch (err) {
+                setStatus(⁠ Microphone error: ${ err.message } ⁠);
+            }
+        });
+
+        // ─── Transcription ──────────────────────────────────────────────────────
+        transcribeBtn.addEventListener("click", async () => {
+            if (!audioBlob) return;
+
+            transcribeBtn.disabled = true;
+            setStatus("Uploading & transcribing… (this may take a moment)");
+            resultEl.textContent = "";
+
+            const form = new FormData();
+            form.append("audio", audioBlob, ⁠ recording${ extFromMime(audioBlob.type)
+        } ⁠);
+
+        try {
+            const res = await fetch(API_URL, { method: "POST", body: form });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ detail: res.statusText }));
+                throw new Error(err.detail ?? "Unknown error");
+            }
+
+            const data = await res.json();
+            resultEl.textContent = data.text || "(No speech detected)";
+            setStatus(⁠ Done! ${ data.words.length } words transcribed. ⁠);
+        } catch (err) {
+            setStatus(⁠ Error: ${ err.message } ⁠);
+        } finally {
+            transcribeBtn.disabled = false;
+        }
+    });
+
+        // ─── Helpers ────────────────────────────────────────────────────────────
+        function setStatus(msg) {
+            statusEl.textContent = msg;
+        }
+
+        function preferredMimeType() {
+            const types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"];
+            return types.find(t => MediaRecorder.isTypeSupported(t)) ?? "";
+        }
+
+        function extFromMime(mime) {
+            if (mime.includes("webm")) return ".webm";
+            if (mime.includes("ogg")) return ".ogg";
+            if (mime.includes("mp4")) return ".m4a";
+            return ".audio";
+        }
+    </script>
+</body>
+
+</html>

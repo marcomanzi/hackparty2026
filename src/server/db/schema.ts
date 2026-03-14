@@ -130,6 +130,13 @@ export const messages = createTable("message", (d) => ({
     .notNull(),
 }));
 
+export const globalSettings = createTable("global_setting", (d) => ({
+  id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  autoResponseEnabled: d.integer({ mode: "boolean" }).notNull().default(false),
+  companyContext: d.text().notNull().default("We are ACME Company. Premium enterprise assistance available 24/7/365."),
+  updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+}));
+
 export const ticketsRelations = relations(tickets, ({ many, one }) => ({
   messages: many(messages),
   sender: one(users, { fields: [tickets.senderId], references: [users.id] }),

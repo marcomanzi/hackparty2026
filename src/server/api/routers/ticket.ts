@@ -1,7 +1,70 @@
 import { z } from "zod";
-import { sql } from "drizzle-orm";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { tickets, messages } from "@/server/db/schema";
+import { tickets, messages, globalSettings } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
+
+/* eslint-disable */
+async function triggerAutoResponse(ctx: any, ticketId: number, content: string) {
+  const settings = await ctx.db.query.globalSettings.findFirst({
+    where: (gs: any, { eq }: any) => eq(gs.id, 1),
+  });
+
+  if (!settings?.autoResponseEnabled) return;
+
+  const ticket = await ctx.db.query.tickets.findFirst({
+    where: (t: any, { eq }: any) => eq(t.id, ticketId),
+    with: { messages: true },
+  });
+
+  if (!ticket) return;
+
+  try {
+    const formattedMessages = (ticket.messages as any[]).map((m: any) => ({
+      role: m.senderType === "customer" ? "user" : "agent",
+      content: m.content,
+    }));
+
+    const requestBody = {
+      ticketId: `TCK-${ticket.id}`,
+      ticketSubject: (ticket.content as string).substring(0, 50),
+      companyContext: settings.companyContext as string,
+      messages: formattedMessages,
+    };
+
+    console.log("[AI Request]", JSON.stringify(requestBody, null, 2));
+
+    const response = await fetch('https://d7dc-93-43-95-133.ngrok-free.app/suggest-reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log("[AI Response Status]", response.status);
+
+    if (response.ok) {
+      const data = await response.json() as { suggestedReply: string };
+      console.log("[AI Response Data]", JSON.stringify(data, null, 2));
+      
+      if (data.suggestedReply) {
+        await ctx.db.insert(messages).values({
+          ticketId,
+          content: data.suggestedReply,
+          senderType: "staff",
+          senderId: "system-ai",
+        });
+        console.log("[AI Success] Inserted response into DB");
+      } else {
+        console.warn("[AI Warning] Empty reply received from AI");
+      }
+    } else {
+      const errorText = await response.text();
+      console.error("[AI Error] Failed to get response:", errorText);
+    }
+  } catch (error) {
+    console.error("AI Auto-Response error:", error);
+  }
+}
+/* eslint-enable */
 
 export const ticketRouter = createTRPCRouter({
   create: publicProcedure
@@ -76,6 +139,9 @@ export const ticketRouter = createTRPCRouter({
           senderType: "customer",
           senderId: ctx.session?.user.id,
         });
+
+        // Trigger AI Auto-Response
+        void triggerAutoResponse(ctx, ticket.id, input.content);
       }
 
       return ticket;
@@ -111,19 +177,19 @@ export const ticketRouter = createTRPCRouter({
   updateStatus: protectedProcedure
     .input(z.object({ id: z.number(), status: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.update(tickets).set({ status: input.status }).where(sql`${tickets.id} = ${input.id}`);
+      await ctx.db.update(tickets).set({ status: input.status }).where(eq(tickets.id, input.id));
     }),
 
   updatePriority: protectedProcedure
     .input(z.object({ id: z.number(), priority: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.update(tickets).set({ priorityLevel: input.priority }).where(sql`${tickets.id} = ${input.id}`);
+      await ctx.db.update(tickets).set({ priorityLevel: input.priority }).where(eq(tickets.id, input.id));
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.delete(tickets).where(sql`${tickets.id} = ${input.id}`);
+      await ctx.db.delete(tickets).where(eq(tickets.id, input.id));
     }),
 
   translate: protectedProcedure
@@ -194,8 +260,43 @@ export const ticketRouter = createTRPCRouter({
       }).returning();
 
       // Update ticket updatedAt
-      await ctx.db.update(tickets).set({ updatedAt: new Date() }).where(sql`${tickets.id} = ${input.ticketId}`);
+      await ctx.db.update(tickets).set({ updatedAt: new Date() }).where(eq(tickets.id, input.ticketId));
+
+      if (input.senderType === "customer") {
+        void triggerAutoResponse(ctx, input.ticketId, input.content);
+      }
 
       return message;
+    }),
+
+  getSettings: protectedProcedure.query(async ({ ctx }) => {
+    let settings = await ctx.db.query.globalSettings.findFirst({
+      where: (gs, { eq }) => eq(gs.id, 1),
+    });
+
+    if (!settings) {
+      // Initialize settings if they don't exist
+      [settings] = await ctx.db.insert(globalSettings).values({
+        id: 1,
+        autoResponseEnabled: false,
+      }).returning();
+    }
+
+    return settings;
+  }),
+
+  updateSettings: protectedProcedure
+    .input(z.object({
+      autoResponseEnabled: z.boolean(),
+      companyContext: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.update(globalSettings)
+        .set({ 
+          autoResponseEnabled: input.autoResponseEnabled,
+          ...(input.companyContext ? { companyContext: input.companyContext } : {})
+        })
+        .where(eq(globalSettings.id, 1))
+        .returning();
     }),
 });
